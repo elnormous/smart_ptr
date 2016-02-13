@@ -28,7 +28,7 @@ public:
         retain();
     }
     
-    const SharedPtr& operator=(const SharedPtr& other)
+    inline const SharedPtr& operator=(const SharedPtr& other)
     {
         release();
         
@@ -65,17 +65,17 @@ public:
         _refCountPtr = nullptr;
     }
     
-    operator bool()
+    inline operator bool()
     {
         return _ptr && _refCountPtr;
     }
     
-    T* operator->()
+    inline T* operator->()
     {
         return _ptr;
     }
     
-    T* get()
+    inline T* get()
     {
         return _ptr;
     }
@@ -131,7 +131,7 @@ public:
         retain();
     }
     
-    const WeakPtr& operator=(const WeakPtr& other)
+    inline const WeakPtr& operator=(const WeakPtr& other)
     {
         release();
         
@@ -143,7 +143,7 @@ public:
         return *this;
     }
     
-    const WeakPtr& operator=(const SharedPtr<T>& other)
+    inline const WeakPtr& operator=(const SharedPtr<T>& other)
     {
         release();
         
