@@ -23,7 +23,7 @@ public:
     }
     
     SharedPtr(const SharedPtr& other):
-        _ptr(other->_ptr), _refCountPtr(other->_refCount)
+        _ptr(other._ptr), _refCountPtr(other._refCountPtr)
     {
         retain();
     }
@@ -195,5 +195,11 @@ private:
     T* _ptr;
     RefCount* _refCountPtr;
 };
+
+template<class T1, class T2>
+SharedPtr<T2> StaticPointerCast(SharedPtr<T1> p)
+{
+    
+}
 
 // TODO: implement static pointer cast
