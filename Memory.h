@@ -28,7 +28,14 @@ public:
         retain();
     }
     
-    inline const SharedPtr& operator=(const SharedPtr& other)
+    template<class U>
+    SharedPtr(const SharedPtr<U>& other):
+        _ptr(static_cast<T*>(other.get())), _refCountPtr(other.getRefCountPtr())
+    {
+        retain();
+    }
+    
+    const SharedPtr& operator=(const SharedPtr& other)
     {
         release();
         
@@ -65,22 +72,27 @@ public:
         _refCountPtr = nullptr;
     }
     
-    inline operator bool()
+    operator bool()
     {
         return _ptr && _refCountPtr;
     }
     
-    inline T* operator->()
+    T* operator->()
     {
         return _ptr;
     }
     
-    inline T* get()
+    inline T* get() const
     {
         return _ptr;
     }
     
-private:
+    inline RefCount* getRefCountPtr() const
+    {
+        return _refCountPtr;
+    }
+    
+protected:
     void retain()
     {
         if (_refCountPtr)
@@ -131,7 +143,7 @@ public:
         retain();
     }
     
-    inline const WeakPtr& operator=(const WeakPtr& other)
+    const WeakPtr& operator=(const WeakPtr& other)
     {
         release();
         
@@ -143,7 +155,7 @@ public:
         return *this;
     }
     
-    inline const WeakPtr& operator=(const SharedPtr<T>& other)
+    const WeakPtr& operator=(const SharedPtr<T>& other)
     {
         release();
         
@@ -172,7 +184,7 @@ public:
         return result;
     }
     
-private:
+protected:
     void retain()
     {
         if (_refCountPtr)
@@ -197,13 +209,13 @@ private:
 };
 
 template<class T, class U>
-SharedPtr<T> StaticPointerCast(SharedPtr<U> p)
+SharedPtr<T> StaticPointerCast(const SharedPtr<U>& p)
 {
-    return SharedPtr<T>(p, static_cast<T*>(p.get()));
+    return SharedPtr<T>(p);
 }
 
-template<class T, class U>
+/*template<class T, class U>
 SharedPtr<T> DynamicPointerCast(SharedPtr<U> p)
 {
-    return SharedPtr<T>(p, dynamic_cast<T*>(p.get()));
-}
+    return SharedPtr<T>(p);
+}*/
