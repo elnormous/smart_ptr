@@ -196,10 +196,14 @@ private:
     RefCount* _refCountPtr;
 };
 
-template<class T1, class T2>
-SharedPtr<T2> StaticPointerCast(SharedPtr<T1> p)
+template<class T, class U>
+SharedPtr<T> StaticPointerCast(SharedPtr<U> p)
 {
-    
+    return SharedPtr<T>(p, static_cast<T*>(p.get()));
 }
 
-// TODO: implement static pointer cast
+template<class T, class U>
+SharedPtr<T> DynamicPointerCast(SharedPtr<U> p)
+{
+    return SharedPtr<T>(p, dynamic_cast<T*>(p.get()));
+}
