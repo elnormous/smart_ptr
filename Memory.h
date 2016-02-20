@@ -8,6 +8,9 @@ struct RefCount
     int32_t weakCount = 0;
 };
 
+struct StaticCastTag {};
+struct ConstCastTag {};
+
 template<class T>
 class WeakPtr;
 
@@ -29,8 +32,15 @@ public:
     }
     
     template<class U>
-    SharedPtr(const SharedPtr<U>& other):
+    SharedPtr(const SharedPtr<U>& other, StaticCastTag):
         _ptr(static_cast<T*>(other.get())), _refCountPtr(other.getRefCountPtr())
+    {
+        retain();
+    }
+    
+    template<class U>
+    SharedPtr(const SharedPtr<U>& other, ConstCastTag):
+        _ptr(const_cast<T*>(other.get())), _refCountPtr(other.getRefCountPtr())
     {
         retain();
     }
@@ -211,11 +221,11 @@ protected:
 template<class T, class U>
 SharedPtr<T> StaticPointerCast(const SharedPtr<U>& p)
 {
-    return SharedPtr<T>(p);
+    return SharedPtr<T>(p, StaticCastTag());
 }
 
-/*template<class T, class U>
-SharedPtr<T> DynamicPointerCast(SharedPtr<U> p)
+template<class T, class U>
+SharedPtr<T> ConstPointerCast(SharedPtr<U> p)
 {
-    return SharedPtr<T>(p);
-}*/
+    return SharedPtr<T>(p, ConstCastTag());
+}
