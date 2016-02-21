@@ -31,6 +31,13 @@ public:
         retain();
     }
     
+    SharedPtr(SharedPtr<T>&& other):
+        _ptr(other._ptr), _refCountPtr(other._refCountPtr)
+    {
+        other._ptr = nullptr;
+        other._refCountPtr = nullptr;
+    }
+    
     template<class U>
     SharedPtr(const SharedPtr<U>& other, StaticCastTag):
         _ptr(static_cast<T*>(other.get())), _refCountPtr(other.getRefCountPtr())
@@ -63,8 +70,18 @@ public:
         return *this;
     }
     
-    // TODO: move constructor
-    // TODO: move assignment
+    const SharedPtr& operator=(SharedPtr&& other)
+    {
+        release();
+        
+        _ptr = other._ptr;
+        _refCountPtr = other._refCountPtr;
+        
+        other._ptr = nullptr;
+        other._refCountPtr = nullptr;
+        
+        return *this;
+    }
     
     SharedPtr(T* ptr):
         _ptr(ptr)
@@ -154,6 +171,13 @@ public:
         retain();
     }
     
+    WeakPtr(WeakPtr<T>&& other):
+        _ptr(other._ptr), _refCountPtr(other._refCountPtr)
+    {
+        other._ptr = nullptr;
+        other._refCountPtr = nullptr;
+    }
+    
     WeakPtr(const SharedPtr<T>& other):
         _ptr(other._ptr), _refCountPtr(other._refCount)
     {
@@ -184,8 +208,18 @@ public:
         return *this;
     }
     
-    // TODO: move constructor
-    // TODO: move assignment
+    const WeakPtr& operator=(WeakPtr&& other)
+    {
+        release();
+        
+        _ptr = other._ptr;
+        _refCountPtr = other._refCountPtr;
+        
+        other._ptr = nullptr;
+        other._refCountPtr = nullptr;
+        
+        return *this;
+    }
     
     ~WeakPtr()
     {
@@ -229,7 +263,7 @@ template<class T>
 class EnableSharedFromThis
 {
 protected:
-    constexpr EnableSharedFromThis(): _weakPtr() {}
+    constexpr EnableSharedFromThis() {}
     EnableSharedFromThis(EnableSharedFromThis const &) {}
     EnableSharedFromThis& operator=(EnableSharedFromThis const &) { return *this; }
     ~EnableSharedFromThis() {}
