@@ -285,16 +285,19 @@ private:
 template<class T>
 class EnableSharedFromThis
 {
+    template <class U> friend class SharedPtr;
 public:
-    mutable WeakPtr<T> _weakPtr;
+    SharedPtr<T> sharedFromThis() { return SharedPtr<T>(_weakPtr); }
+    SharedPtr<T const> sharedFromThis() const { return SharedPtr<T const>(_weakPtr); }
+    
 protected:
     constexpr EnableSharedFromThis() {}
     EnableSharedFromThis(EnableSharedFromThis const &) {}
     EnableSharedFromThis& operator=(EnableSharedFromThis const &) { return *this; }
     ~EnableSharedFromThis() {}
-public:
-    SharedPtr<T> sharedFromThis() { return SharedPtr<T>(_weakPtr); }
-    SharedPtr<T const> sharedFromThis() const { return SharedPtr<T const>(_weakPtr); }
+    
+private:
+    mutable WeakPtr<T> _weakPtr;
 };
 
 template<class T, class U>
