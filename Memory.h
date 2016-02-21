@@ -62,7 +62,7 @@ public:
         retain();
     }
     
-    const SharedPtr& operator=(const SharedPtr& other)
+    const SharedPtr& operator=(const SharedPtr& other) noexcept
     {
         release();
         
@@ -74,7 +74,7 @@ public:
         return *this;
     }
     
-    const SharedPtr& operator=(SharedPtr&& other)
+    const SharedPtr& operator=(SharedPtr&& other) noexcept
     {
         release();
         
@@ -107,30 +107,30 @@ public:
         release();
     }
     
-    void reset()
+    void reset() noexcept
     {
         release();
         _ptr = nullptr;
         _refCountPtr = nullptr;
     }
     
-    operator bool()
+    operator bool() noexcept
     {
         return _ptr && _refCountPtr;
     }
     
-    T* operator->()
+    T* operator->() noexcept
     {
         return _ptr;
     }
     
-    inline T* get() const
+    inline T* get() const noexcept
     {
         return _ptr;
     }
     
 private:
-    inline void retain()
+    inline void retain() noexcept
     {
         if (_refCountPtr)
         {
@@ -138,7 +138,7 @@ private:
         }
     }
     
-    inline void release()
+    inline void release() noexcept
     {
         if (_refCountPtr)
         {
@@ -204,7 +204,7 @@ public:
         retain();
     }
     
-    const WeakPtr& operator=(const WeakPtr& other)
+    const WeakPtr& operator=(const WeakPtr& other) noexcept
     {
         release();
         
@@ -217,7 +217,7 @@ public:
     }
     
     template<class U>
-    const WeakPtr& operator=(const SharedPtr<U>& other)
+    const WeakPtr& operator=(const SharedPtr<U>& other) noexcept
     {
         release();
         
@@ -229,7 +229,7 @@ public:
         return *this;
     }
     
-    const WeakPtr& operator=(WeakPtr&& other)
+    const WeakPtr& operator=(WeakPtr&& other) noexcept
     {
         release();
         
@@ -247,7 +247,7 @@ public:
         release();
     }
     
-    SharedPtr<T> lock()
+    SharedPtr<T> lock() noexcept
     {
         SharedPtr<T> result;
         result._ptr = _ptr;
@@ -257,7 +257,7 @@ public:
     }
     
 private:
-    inline void retain()
+    inline void retain() noexcept
     {
         if (_refCountPtr)
         {
@@ -265,7 +265,7 @@ private:
         }
     }
     
-    inline void release()
+    inline void release() noexcept
     {
         if (_refCountPtr)
         {
