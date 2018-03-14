@@ -24,19 +24,19 @@ class SharedPtr
     template <class U> friend class WeakPtr;
     template <class U> friend class SharedPtr;
 public:
-    SharedPtr():
-        ptr(nullptr), refCountPtr(nullptr)
+    typedef T ElementType;
+
+    SharedPtr()
     {
-        
     }
     
     SharedPtr(const SharedPtr& other):
         ptr(other.ptr), refCountPtr(other.refCountPtr)
     {
-        retain();
+        addRef();
     }
     
-    SharedPtr(SharedPtr<T>&& other):
+    SharedPtr(SharedPtr<ElementType>&& other):
         ptr(other.ptr), refCountPtr(other.refCountPtr)
     {
         other.ptr = nullptr;
@@ -45,39 +45,39 @@ public:
     
     template<class U>
     SharedPtr(const SharedPtr<U>& other, StaticCastTag):
-        ptr(static_cast<T*>(other.ptr)), refCountPtr(other.refCountPtr)
+        ptr(static_cast<ElementType*>(other.ptr)), refCountPtr(other.refCountPtr)
     {
-        retain();
+        addRef();
     }
     
     template<class U>
     SharedPtr(const SharedPtr<U>& other, ConstCastTag):
-        ptr(const_cast<T*>(other.ptr)), refCountPtr(other.refCountPtr)
+        ptr(const_cast<ElementType*>(other.ptr)), refCountPtr(other.refCountPtr)
     {
-        retain();
+        addRef();
     }
     
-    SharedPtr(const WeakPtr<T>& other):
+    SharedPtr(const WeakPtr<ElementType>& other):
         ptr(other.ptr), refCountPtr(other.refCountPtr)
     {
-        retain();
+        addRef();
     }
     
     const SharedPtr& operator=(const SharedPtr& other) noexcept
     {
-        release();
+        removeRef();
         
         ptr = other.ptr;
         refCountPtr = other.refCountPtr;
         
-        retain();
+        addRef();
         
         return *this;
     }
     
     const SharedPtr& operator=(SharedPtr&& other) noexcept
     {
-        release();
+        removeRef();
         
         ptr = other.ptr;
         refCountPtr = other.refCountPtr;
@@ -88,55 +88,66 @@ public:
         return *this;
     }
     
-    SharedPtr(T* p):
+    explicit SharedPtr(ElementType* p):
         ptr(p)
     {
         if (ptr)
         {
             refCountPtr = new RefCount();
-            retain();
+            addRef();
             enableWeakThis(ptr);
-        }
-        else
-        {
-            refCountPtr = nullptr;
         }
     }
     
     ~SharedPtr()
     {
-        release();
+        removeRef();
     }
     
     void reset() noexcept
     {
-        release();
+        removeRef();
         ptr = nullptr;
         refCountPtr = nullptr;
     }
-    
-    operator bool() noexcept
+
+    void reset(ElementType* p) noexcept
+    {
+        removeRef();
+        ptr = p;
+
+        if (ptr)
+        {
+            refCountPtr = new RefCount();
+            addRef();
+            enableWeakThis(ptr);
+        }
+        else
+            refCountPtr = nullptr;
+    }
+
+    inline operator bool() noexcept
     {
         return ptr && refCountPtr;
     }
     
-    T* operator->() noexcept
+    inline ElementType* operator->() noexcept
     {
         return ptr;
     }
     
-    inline T* get() const noexcept
+    inline ElementType* get() const noexcept
     {
         return ptr;
     }
     
 private:
-    inline void retain() noexcept
+    inline void addRef() noexcept
     {
         if (refCountPtr) ++refCountPtr->sharedCount;
     }
     
-    inline void release() noexcept
+    inline void removeRef() noexcept
     {
         if (refCountPtr)
         {
@@ -166,8 +177,8 @@ private:
     
     inline void enableWeakThis(const void*) noexcept {}
     
-    T* ptr;
-    RefCount* refCountPtr;
+    ElementType* ptr = nullptr;
+    RefCount* refCountPtr = nullptr;
 };
 
 template<class T>
@@ -176,19 +187,20 @@ class WeakPtr
     template <class U> friend class WeakPtr;
     template <class U> friend class SharedPtr;
 public:
+    typedef T ElementType;
+
     WeakPtr():
         ptr(nullptr), refCountPtr(nullptr)
     {
-        
     }
     
     WeakPtr(const WeakPtr& other):
         ptr(other.ptr), refCountPtr(other.refCount)
     {
-        retain();
+        addRef();
     }
     
-    WeakPtr(WeakPtr<T>&& other):
+    WeakPtr(WeakPtr<ElementType>&& other):
         ptr(other.ptr), refCountPtr(other.refCountPtr)
     {
         other.ptr = nullptr;
@@ -199,17 +211,17 @@ public:
     WeakPtr(const SharedPtr<U>& other):
         ptr(other.ptr), refCountPtr(other.refCount)
     {
-        retain();
+        addRef();
     }
     
     const WeakPtr& operator=(const WeakPtr& other) noexcept
     {
-        release();
+        removeRef();
         
         ptr = other.ptr;
         refCountPtr = other.refCountPtr;
         
-        retain();
+        addRef();
         
         return *this;
     }
@@ -217,19 +229,19 @@ public:
     template<class U>
     const WeakPtr& operator=(const SharedPtr<U>& other) noexcept
     {
-        release();
+        removeRef();
         
         ptr = other.ptr;
         refCountPtr = other.refCountPtr;
         
-        retain();
+        addRef();
         
         return *this;
     }
     
     const WeakPtr& operator=(WeakPtr&& other) noexcept
     {
-        release();
+        removeRef();
         
         ptr = other.ptr;
         refCountPtr = other.refCountPtr;
@@ -242,25 +254,25 @@ public:
     
     ~WeakPtr()
     {
-        release();
+        removeRef();
     }
     
-    SharedPtr<T> lock() noexcept
+    SharedPtr<ElementType> lock() noexcept
     {
-        SharedPtr<T> result;
+        SharedPtr<ElementType> result;
         result.ptr = ptr;
         result.refCountPtr = refCountPtr;
-        result.retain();
+        result.addRef();
         return result;
     }
     
 private:
-    inline void retain() noexcept
+    inline void addRef() noexcept
     {
         if (refCountPtr) ++refCountPtr->weakCount;
     }
     
-    inline void release() noexcept
+    inline void removeRef() noexcept
     {
         if (refCountPtr)
         {
@@ -273,7 +285,7 @@ private:
         }
     }
     
-    T* ptr;
+    ElementType* ptr;
     RefCount* refCountPtr;
 };
 
@@ -282,8 +294,10 @@ class EnableSharedFromThis
 {
     template <class U> friend class SharedPtr;
 public:
-    SharedPtr<T> sharedFromThis() { return SharedPtr<T>(weakPtr); }
-    SharedPtr<T const> sharedFromThis() const { return SharedPtr<T const>(weakPtr); }
+    typedef T ElementType;
+
+    SharedPtr<ElementType> sharedFromThis() { return SharedPtr<T>(weakPtr); }
+    SharedPtr<ElementType const> sharedFromThis() const { return SharedPtr<T const>(weakPtr); }
     
 protected:
     constexpr EnableSharedFromThis() {}
@@ -292,7 +306,7 @@ protected:
     ~EnableSharedFromThis() {}
     
 private:
-    mutable WeakPtr<T> weakPtr;
+    mutable WeakPtr<ElementType> weakPtr;
 };
 
 template<class T, class U>
