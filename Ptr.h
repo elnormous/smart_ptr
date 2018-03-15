@@ -169,10 +169,7 @@ private:
     template <class U>
     inline void enableWeakThis(const EnableSharedFromThis<U>* e) noexcept
     {
-        if (e)
-        {
-            e->weakPtr = *this;
-        }
+        if (e) e->weakPtr = *this;
     }
     
     inline void enableWeakThis(const void*) noexcept {}
